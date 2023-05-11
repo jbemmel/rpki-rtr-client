@@ -224,10 +224,15 @@ def dump_routes(rtr_session, serial, session_id):
 		# dump the full routing table
 		rtr_session.save_routing_table()
 
-def rtr_client(host=None, port=None, serial=None, session_id=None, timeout=None, dump=False, debug=0):
+class RTRClient(object):
+
+  def get_session(self):
+	  return self.rtr_session
+
+  def __init__(self, host=None, port=None, serial=None, session_id=None, timeout=None, dump=False, debug=0):
 	"""RTR client"""
 
-	rtr_session = rfc8210router(serial=serial, session_id=session_id, support_dump=dump, debug=debug)
+	self.rtr_session = rfc8210router(serial=serial, session_id=session_id, support_dump=dump, debug=debug)
 
 	if dump:
 		data_directory(now_in_utc())
@@ -437,7 +442,7 @@ def doit(args=None):
 		elif opt in ('-d', '--dump'):
 			dump = True
 
-	rtr_client(host=host, port=port, serial=serial, session_id=session_id, timeout=timeout, dump=dump, debug=debug)
+	RTRClient(host=host, port=port, serial=serial, session_id=session_id, timeout=timeout, dump=dump, debug=debug)
 	sys.exit(0)
 
 def main(args=None):
