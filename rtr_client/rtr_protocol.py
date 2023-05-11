@@ -15,8 +15,11 @@ except ImportError:
 class rfc8210router(object):
 	"""RTR RFC 8210 protocol"""
 
-	def __init__(self, serial=None, session_id=None, debug=0):
+	def __init__(self, serial=None, session_id=None, support_dump=False, debug=0):
 		"""RTR RFC 8210 protocol"""
+		""" Note on support_dump: By default (False), this class populates the
+		    prefix tree but does not store each batch of routes as they come in,
+			to save memory resources. Set to 'True' to cache each batch """
 
 		self.time_next_refresh = None
 
@@ -46,8 +49,11 @@ class rfc8210router(object):
 			self._routingtable = RoutingTable()
 		except:
 			# this handles the case where RoutingTable() isn't configured correctly
+			print( "JvB RoutingTable not available!" )
 			self._routingtable = None
-		self.clear_routes()
+
+		if support_dump:
+			self.clear_routes()
 
 	def _debug_(self, msg):
 		"""RTR RFC 8210 protocol"""
@@ -196,25 +202,27 @@ class rfc8210router(object):
 
 		# Save away IP and ASN as needed
 		if flag_announce == 'A':
-			if maxlen:
-				self._routes['announce'] += [{'ip': cidr, 'asn': asn, 'maxlen': maxlen}]
-			else:
-				self._routes['announce'] += [{'ip': cidr, 'asn': asn}]
+			if hasattr(self,"_routes"):
+				if maxlen:
+					self._routes['announce'] += [{'ip': cidr, 'asn': asn, 'maxlen': maxlen}]
+				else:
+					self._routes['announce'] += [{'ip': cidr, 'asn': asn}]
 			if self._routingtable:
 				try:
 					self._routingtable.announce(cidr, asn, maxlen)
 				except:
 					sys.stderr.write("announce(%s, %s, %s) - failed\n" % (cidr, asn, maxlen))
 		else:
-			if maxlen:
-				self._routes['withdraw'] += [{'ip': cidr, 'asn': asn, 'maxlen': maxlen}]
-			else:
-				self._routes['withdraw'] += [{'ip': cidr, 'asn': asn}]
-			try:
-				if self._routingtable:
+			if hasattr(self,"_routes"):
+				if maxlen:
+					self._routes['withdraw'] += [{'ip': cidr, 'asn': asn, 'maxlen': maxlen}]
+				else:
+					self._routes['withdraw'] += [{'ip': cidr, 'asn': asn}]
+			if self._routingtable:
+				try:
 					self._routingtable.withdraw(cidr, asn, maxlen)
-			except:
-				sys.stderr.write("withdraw(%s, %s, %s) - failed\n" % (cidr, asn, maxlen))
+				except:
+					sys.stderr.write("withdraw(%s, %s, %s) - failed\n" % (cidr, asn, maxlen))
 
 	def _convert_to_hms(self, secs):
 		"""RTR RFC 8210 protocol"""
@@ -288,8 +296,8 @@ class rfc8210router(object):
 			self._retry_interval = self._read_u32bits(d[8:12])
 			self._expire_interval = self._read_u32bits(d[12:16])
 			self._debug_('End of Data: n_routes=%d/%d session_id=%d serial=%d refresh=%s retry=%s expire=%s' % (
-							len(self._routes['announce']),
-							len(self._routes['withdraw']),
+							len(self._routes['announce'] if hasattr(self,"_routes") else []),
+							len(self._routes['withdraw'] if hasattr(self,"_routes") else []),
 							session_id,
 							latest_serial_number,
 							self._convert_to_hms(self._refresh_interval),
@@ -500,3 +508,9 @@ class rfc8210router(object):
 		#if self._routingtable:
 		#	self._routingtable.clear()
 
+	def lookup_prefix(self,cidr):
+		""" JvB added, checks whether a given prefix is announced in RPKI """
+		if self._routingtable:
+			return self._routingtable.lookup(cidr)
+		print( "JvB no routing table yet..." )
+		return None

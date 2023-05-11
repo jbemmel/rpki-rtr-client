@@ -1,6 +1,14 @@
 rpki-rtr-client
 ===============
 
+# JvB note on added rtr_routes.lookup
+
+Added for a use case where the client builds the table in memory, and another
+process uses its cache to lookup prefixes.
+
+RPKI allows the specification of 'maxlen', for example 1.0.0.0/22 with maxlen 24
+also allows 1.0.0.0/23 and 1.0.100.0/24. The lookup takes this into account
+
 Introduction
 ------------
 

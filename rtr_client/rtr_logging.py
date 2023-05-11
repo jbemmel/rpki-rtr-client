@@ -7,9 +7,6 @@ import logging
 #	# Python 2
 #	import httplib as http_client
 
-DEBUG = 0
-INFO = 1
-
 class rfc8210logger(object):
 	""" Logging for Cloudflare API"""
 
@@ -49,4 +46,3 @@ class rfc8210logger(object):
 			return logging.DEBUG
 		else:
 			return logging.INFO
-

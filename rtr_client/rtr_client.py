@@ -227,7 +227,7 @@ def dump_routes(rtr_session, serial, session_id):
 def rtr_client(host=None, port=None, serial=None, session_id=None, timeout=None, dump=False, debug=0):
 	"""RTR client"""
 
-	rtr_session = rfc8210router(serial=serial, session_id=session_id, debug=debug)
+	rtr_session = rfc8210router(serial=serial, session_id=session_id, support_dump=dump, debug=debug)
 
 	if dump:
 		data_directory(now_in_utc())
@@ -312,7 +312,8 @@ def rtr_client(host=None, port=None, serial=None, session_id=None, timeout=None,
 				sys.stderr.write('\n%s: SESSION %d NEW SERIAL %s->%d\n' % (now_in_utc(), new_session_id, serial, new_serial))
 				sys.stderr.flush()
 				# dump present routes into file based on serial number
-				dump_routes(rtr_session, new_serial, new_session_id)
+				if dump:
+					dump_routes(rtr_session, new_serial, new_session_id)
 				# update serial number
 				serial = new_serial
 				# update session_id
@@ -320,8 +321,8 @@ def rtr_client(host=None, port=None, serial=None, session_id=None, timeout=None,
 
 			try:
 				# because random timers are your friend! but keep above one second - just because
-				delta = 0.2
-				this_timeout = max(1.0, float(randrange(timeout * (1-delta), timeout * (1+delta), 1)))
+				delta = 200 # in ms
+				this_timeout = max(1.0, float(randrange(timeout * (1000-delta), timeout * (1000+delta), 1)/1000))
 				ready = select.select([connection.fd], [], [], this_timeout)
 			except KeyboardInterrupt:
 				sys.stderr.write('\nselect wait: ^C\n')
@@ -410,7 +411,8 @@ def doit(args=None):
 						'serial=',
 						'session=',
 						'timeout=',
-						'debug'
+						'debug',
+						'dump'
 						])
 	except getopt.GetoptError:
 		sys.exit(usage)
@@ -447,4 +449,3 @@ def main(args=None):
 
 if __name__ == '__main__':
 	main()
-

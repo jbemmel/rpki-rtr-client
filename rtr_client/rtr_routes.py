@@ -66,6 +66,31 @@ class RoutingTable(object):
 		# clearly we didn't find the route you are trying to withdraw
 		raise IndexError("withdraw: %s %s %s" % (cidr, asn, maxlen))
 
+	def lookup(self, prefix):
+		""" Check if the given prefix is in the table, and return the list of AS
+		    numbers authorized to originate that prefix """
+		cidr = ipaddress.ip_network( prefix )
+		version = cidr.version
+		len = cidr.prefixlen
+		if not self._ipv[version].has_key(cidr): # Get parent prefix, if any
+			super_prefix = self._ipv[version].get_key(cidr)
+			if super_prefix:
+				cidr = ipaddress.ip_network( super_prefix )
+				# len = cidr.prefixlen
+
+		if self._ipv[version].has_key(cidr):
+			if len in self._ipv[version][cidr]:
+				# one or more ASN, return first and only entry under maxlen
+				return list(self._ipv[version][cidr][len][0].keys())
+			else:
+				# In theory there could be multiple different maxlen values
+				for maxlen in self._ipv[version][cidr]:
+					if maxlen>len:
+						return list( self._ipv[version][cidr][maxlen][0].keys() )
+
+		# Not found
+		return None
+
 	def save_routing_table(self):
 		"""RTR protocol basic Routing Table support"""
 
@@ -144,4 +169,3 @@ class RoutingTable(object):
 
 		# this storage method allows for searching and more
 		self._ipv = {4: pytricia.PyTricia(32), 6: pytricia.PyTricia(128)}
-
