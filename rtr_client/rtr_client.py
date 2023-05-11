@@ -226,162 +226,162 @@ def dump_routes(rtr_session, serial, session_id):
 
 class RTRClient(object):
 
-  def get_session(self):
-	  return self.rtr_session
+	def get_session(self):
+		return self.rtr_session
 
-  def __init__(self, host=None, port=None, serial=None, session_id=None, timeout=None, dump=False, debug=0):
-	"""RTR client"""
+	def __init__(self, host=None, port=None, serial=None, session_id=None, timeout=None, dump=False, debug=0):
+		"""RTR client"""
 
-	self.rtr_session = rfc8210router(serial=serial, session_id=session_id, support_dump=dump, debug=debug)
+		self.rtr_session = rfc8210router(serial=serial, session_id=session_id, support_dump=dump, debug=debug)
 
-	if dump:
-		data_directory(now_in_utc())
-		dump_fd = open('data/__________-raw-data.bin', 'w')
+		if dump:
+			data_directory(now_in_utc())
+			dump_fd = open('data/__________-raw-data.bin', 'w')
 
-	p = Process()
+		p = Process()
 
-	have_session_id = False
-
-	connection = None
-	while True:
-		if not connection:
-			try:
-				connection = Connect(host, port)
-			except KeyboardInterrupt:
-				# no need to print anything - just exit!
-				sys.exit(1)
-
-		if not connection.fd:
-			connection = None
-			sys.stderr.write('%s: NO NETWORK CONNECTION\n' % (now_in_utc()))
-			sys.stderr.flush()
-			# sys.exit(1)
-			continue
-
-		p.clear()
 		have_session_id = False
-		sys.stderr.write('%s: CONNECT %s\n' % (now_in_utc(), connection.name()))
-		sys.stderr.flush()
 
-		if session_id is None or session_id == 0 or serial is None or serial == 0:
-			# starting from scratch!
-			packet = rtr_session.reset_query()
-			serial = 0
-			have_session_id = False
-			session_id = 0
-		else:
-			# packet = rtr_session.serial_query(serial)
-			packet = rtr_session.serial_query()
-
-		# send the first packet on the connection -- kicking things off!
-		try:
-			sys.stderr.write('+')
-			sys.stderr.flush()
-			connection.send(packet)
-		except Exception as e:
-			sys.stderr.write('send: %s\n' % (e))
-			sys.stderr.flush()
-			connection.close()
-			connection = None
-			# this will open up a fresh connection and try all over again
-			continue
-
+		connection = None
 		while True:
-			# At every oppertunity, see if we have a new session_id number
-			try:
-				new_session_id = rtr_session.get_session_id()
-				if have_session_id:
-					if new_session_id != session_id:
-						sys.stderr.write('\n%s: REFRESHED SESSION ID %d->%d\n' % (now_in_utc(), session_id, new_session_id))
-						sys.stderr.flush()
-						# consider a reset here - once we handle 0
-				else:
-					sys.stderr.write('\n%s: NEW SESSION ID %d\n' % (now_in_utc(), new_session_id))
-					sys.stderr.flush()
-				# update session_id number
-				session_id = new_session_id
-				have_session_id = True
-			except ValueError:
-				# no session_id number known yet - should only happen once
-				sys.stderr.write('%s: NO SESSION ID\n' % (now_in_utc()))
-				sys.stderr.flush()
-				pass
+			if not connection:
+				try:
+					connection = Connect(host, port)
+				except KeyboardInterrupt:
+					# no need to print anything - just exit!
+					sys.exit(1)
 
-			# At every oppertunity, see if we have a new serial number
-			new_serial = rtr_session.cache_serial_number()
-			if new_serial != serial:
+			if not connection.fd:
+				connection = None
+				sys.stderr.write('%s: NO NETWORK CONNECTION\n' % (now_in_utc()))
+				sys.stderr.flush()
+				# sys.exit(1)
+				continue
+
+			p.clear()
+			have_session_id = False
+			sys.stderr.write('%s: CONNECT %s\n' % (now_in_utc(), connection.name()))
+			sys.stderr.flush()
+
+			if session_id is None or session_id == 0 or serial is None or serial == 0:
+				# starting from scratch!
+				packet = rtr_session.reset_query()
+				serial = 0
+				have_session_id = False
+				session_id = 0
+			else:
+				# packet = rtr_session.serial_query(serial)
+				packet = rtr_session.serial_query()
+
+			# send the first packet on the connection -- kicking things off!
+			try:
+				sys.stderr.write('+')
+				sys.stderr.flush()
+				connection.send(packet)
+			except Exception as e:
+				sys.stderr.write('send: %s\n' % (e))
+				sys.stderr.flush()
+				connection.close()
+				connection = None
+				# this will open up a fresh connection and try all over again
+				continue
+
+		  	while True:
+			# At every oppertunity, see if we have a new session_id number
 				try:
 					new_session_id = rtr_session.get_session_id()
+					if have_session_id:
+						if new_session_id != session_id:
+							sys.stderr.write('\n%s: REFRESHED SESSION ID %d->%d\n' % (now_in_utc(), session_id, new_session_id))
+							sys.stderr.flush()
+						# consider a reset here - once we handle 0
+					else:
+						sys.stderr.write('\n%s: NEW SESSION ID %d\n' % (now_in_utc(), new_session_id))
+						sys.stderr.flush()
+					# update session_id number
+					session_id = new_session_id
+					have_session_id = True
 				except ValueError:
-					new_session_id = 0
-				sys.stderr.write('\n%s: SESSION %d NEW SERIAL %s->%d\n' % (now_in_utc(), new_session_id, serial, new_serial))
-				sys.stderr.flush()
-				# dump present routes into file based on serial number
-				if dump:
-					dump_routes(rtr_session, new_serial, new_session_id)
-				# update serial number
-				serial = new_serial
-				# update session_id
-				session_id = new_session_id
-
-			try:
-				# because random timers are your friend! but keep above one second - just because
-				delta = 200 # in ms
-				this_timeout = max(1.0, float(randrange(timeout * (1000-delta), timeout * (1000+delta), 1)/1000))
-				ready = select.select([connection.fd], [], [], this_timeout)
-			except KeyboardInterrupt:
-				sys.stderr.write('\nselect wait: ^C\n')
-				sys.stderr.flush()
-				sys.exit(1)
-			except Exception as e:
-				sys.stderr.write('\nselect wait: %s\n' % (e))
-				sys.stderr.flush()
-				break
-
-			if not ready[0]:
-				# Timeout
-				sys.stderr.write('T')
-				sys.stderr.flush()
-
-				if rtr_session.time_remaining():
-					sys.stderr.write('-')
+					# no session_id number known yet - should only happen once
+					sys.stderr.write('%s: NO SESSION ID\n' % (now_in_utc()))
 					sys.stderr.flush()
-					continue
+					pass
 
-				# timed out - go ask for more data!
-				packet = rtr_session.serial_query()
-				## rtr_session.process(packet)
+				# At every oppertunity, see if we have a new serial number
+				new_serial = rtr_session.cache_serial_number()
+				if new_serial != serial:
+					try:
+						new_session_id = rtr_session.get_session_id()
+					except ValueError:
+						new_session_id = 0
+					sys.stderr.write('\n%s: SESSION %d NEW SERIAL %s->%d\n' % (now_in_utc(), new_session_id, serial, new_serial))
+					sys.stderr.flush()
+					# dump present routes into file based on serial number
+					if dump:
+						dump_routes(rtr_session, new_serial, new_session_id)
+					# update serial number
+					serial = new_serial
+					# update session_id
+					session_id = new_session_id
+
 				try:
-					sys.stderr.write('s')
+					# because random timers are your friend! but keep above one second - just because
+					delta = 200 # in ms
+					this_timeout = max(1.0, randrange(timeout * (1000-delta), timeout * (1000+delta), 1)/1000.0)
+					ready = select.select([connection.fd], [], [], this_timeout)
+				except KeyboardInterrupt:
+					sys.stderr.write('\nselect wait: ^C\n')
 					sys.stderr.flush()
-					connection.send(packet)
-					continue
+					sys.exit(1)
 				except Exception as e:
-					sys.stderr.write('send: %s\n' % (e))
+					sys.stderr.write('\nselect wait: %s\n' % (e))
 					sys.stderr.flush()
+					break
+
+				if not ready[0]:
+					# Timeout
+					sys.stderr.write('T')
+					sys.stderr.flush()
+
+					if rtr_session.time_remaining():
+						sys.stderr.write('-')
+						sys.stderr.flush()
+						continue
+
+					# timed out - go ask for more data!
+					packet = rtr_session.serial_query()
+					## rtr_session.process(packet)
+					try:
+						sys.stderr.write('s')
+						sys.stderr.flush()
+						connection.send(packet)
+						continue
+					except Exception as e:
+						sys.stderr.write('send: %s\n' % (e))
+						sys.stderr.flush()
+						connection.close()
+						connection = None
+						break
+
+				try:
+					sys.stderr.write('.')
+					sys.stderr.flush()
+					v = connection.recv(64*1024)
+				except Exception as e:
+					sys.stderr.write('recv: %s\n' % (e))
+					sys.stderr.flush()
+					v = None
 					connection.close()
 					connection = None
 					break
 
-			try:
-				sys.stderr.write('.')
-				sys.stderr.flush()
-				v = connection.recv(64*1024)
-			except Exception as e:
-				sys.stderr.write('recv: %s\n' % (e))
-				sys.stderr.flush()
-				v = None
-				connection.close()
-				connection = None
-				break
+				if dump:
+					# save raw data away
+					dump_fd.buffer.write(v)
+					dump_fd.flush()
 
-			if dump:
-				# save raw data away
-				dump_fd.buffer.write(v)
-				dump_fd.flush()
-
-			if not p.do_hunk(rtr_session, v):
-				break
+				if not p.do_hunk(rtr_session, v):
+					break
 
 def doit(args=None):
 	"""RTR client"""
