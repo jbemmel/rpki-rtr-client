@@ -286,7 +286,7 @@ class RTRClient(object):
 				# this will open up a fresh connection and try all over again
 				continue
 
-		  	while True:
+			while True:
 			# At every oppertunity, see if we have a new session_id number
 				try:
 					new_session_id = rtr_session.get_session_id()
