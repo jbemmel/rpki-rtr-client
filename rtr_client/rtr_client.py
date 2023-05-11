@@ -265,13 +265,13 @@ class RTRClient(object):
 
 			if session_id is None or session_id == 0 or serial is None or serial == 0:
 				# starting from scratch!
-				packet = rtr_session.reset_query()
+				packet = self.rtr_session.reset_query()
 				serial = 0
 				have_session_id = False
 				session_id = 0
 			else:
 				# packet = rtr_session.serial_query(serial)
-				packet = rtr_session.serial_query()
+				packet = self.rtr_session.serial_query()
 
 			# send the first packet on the connection -- kicking things off!
 			try:
@@ -289,7 +289,7 @@ class RTRClient(object):
 			while True:
 			# At every oppertunity, see if we have a new session_id number
 				try:
-					new_session_id = rtr_session.get_session_id()
+					new_session_id = self.rtr_session.get_session_id()
 					if have_session_id:
 						if new_session_id != session_id:
 							sys.stderr.write('\n%s: REFRESHED SESSION ID %d->%d\n' % (now_in_utc(), session_id, new_session_id))
@@ -308,17 +308,17 @@ class RTRClient(object):
 					pass
 
 				# At every oppertunity, see if we have a new serial number
-				new_serial = rtr_session.cache_serial_number()
+				new_serial = self.rtr_session.cache_serial_number()
 				if new_serial != serial:
 					try:
-						new_session_id = rtr_session.get_session_id()
+						new_session_id = self.rtr_session.get_session_id()
 					except ValueError:
 						new_session_id = 0
 					sys.stderr.write('\n%s: SESSION %d NEW SERIAL %s->%d\n' % (now_in_utc(), new_session_id, serial, new_serial))
 					sys.stderr.flush()
 					# dump present routes into file based on serial number
 					if dump:
-						dump_routes(rtr_session, new_serial, new_session_id)
+						dump_routes(self.rtr_session, new_serial, new_session_id)
 					# update serial number
 					serial = new_serial
 					# update session_id
@@ -349,7 +349,7 @@ class RTRClient(object):
 						continue
 
 					# timed out - go ask for more data!
-					packet = rtr_session.serial_query()
+					packet = self.rtr_session.serial_query()
 					## rtr_session.process(packet)
 					try:
 						sys.stderr.write('s')
@@ -380,7 +380,7 @@ class RTRClient(object):
 					dump_fd.buffer.write(v)
 					dump_fd.flush()
 
-				if not p.do_hunk(rtr_session, v):
+				if not p.do_hunk(self.rtr_session, v):
 					break
 
 def doit(args=None):
