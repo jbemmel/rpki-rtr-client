@@ -229,15 +229,18 @@ class RTRClient(object):
 	def get_session(self):
 		return self.rtr_session
 
-	def __init__(self, host=None, port=None, serial=None, session_id=None, timeout=None, dump=False, debug=0):
+	def __init__(self, serial=None, session_id=None, dump=False, debug=0):
 		"""RTR client"""
 
 		self.rtr_session = rfc8210router(serial=serial, session_id=session_id, support_dump=dump, debug=debug)
-
+		self.dump = dump
 		if dump:
 			data_directory(now_in_utc())
-			dump_fd = open('data/__________-raw-data.bin', 'w')
+			self.dump_fd = open('data/__________-raw-data.bin', 'w')
 
+
+	def connect(self, host=None, port=None, timeout=None):
+		""" Does not return """
 		p = Process()
 
 		have_session_id = False
@@ -317,7 +320,7 @@ class RTRClient(object):
 					sys.stderr.write('\n%s: SESSION %d NEW SERIAL %s->%d\n' % (now_in_utc(), new_session_id, serial, new_serial))
 					sys.stderr.flush()
 					# dump present routes into file based on serial number
-					if dump:
+					if self.dump:
 						dump_routes(self.rtr_session, new_serial, new_session_id)
 					# update serial number
 					serial = new_serial
@@ -343,7 +346,7 @@ class RTRClient(object):
 					sys.stderr.write('T')
 					sys.stderr.flush()
 
-					if rtr_session.time_remaining():
+					if self.rtr_session.time_remaining():
 						sys.stderr.write('-')
 						sys.stderr.flush()
 						continue
@@ -375,10 +378,10 @@ class RTRClient(object):
 					connection = None
 					break
 
-				if dump:
+				if self.dump:
 					# save raw data away
-					dump_fd.buffer.write(v)
-					dump_fd.flush()
+					self.dump_fd.buffer.write(v)
+					self.dump_fd.flush()
 
 				if not p.do_hunk(self.rtr_session, v):
 					break
