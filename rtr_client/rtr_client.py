@@ -236,8 +236,10 @@ class RTRClient(object):
 	def __init__(self, serial=None, session_id=None, dump=False, debug=0):
 		"""RTR client"""
 
-		self.rtr_session = rfc8210router(serial=serial, session_id=session_id, support_dump=dump, debug=debug)
+		self.serial = serial
+		self.session_id = session_id
 		self.dump = dump
+		self.rtr_session = rfc8210router(serial=serial, session_id=session_id, support_dump=dump, debug=debug)
 		if dump:
 			data_directory(now_in_utc())
 			self.dump_fd = open('data/__________-raw-data.bin', 'w')
@@ -270,12 +272,12 @@ class RTRClient(object):
 			sys.stderr.write('%s: CONNECT %s\n' % (now_in_utc(), connection.name()))
 			sys.stderr.flush()
 
-			if session_id is None or session_id == 0 or serial is None or serial == 0:
+			if self.session_id is None or self.session_id == 0 or self.serial is None or self.serial == 0:
 				# starting from scratch!
 				packet = self.rtr_session.reset_query()
-				serial = 0
+				self.serial = 0
 				have_session_id = False
-				session_id = 0
+				self.session_id = 0
 			else:
 				# packet = rtr_session.serial_query(serial)
 				packet = self.rtr_session.serial_query()
@@ -298,15 +300,15 @@ class RTRClient(object):
 				try:
 					new_session_id = self.rtr_session.get_session_id()
 					if have_session_id:
-						if new_session_id != session_id:
-							sys.stderr.write('\n%s: REFRESHED SESSION ID %d->%d\n' % (now_in_utc(), session_id, new_session_id))
+						if new_session_id != self.session_id:
+							sys.stderr.write('\n%s: REFRESHED SESSION ID %d->%d\n' % (now_in_utc(), self.session_id, new_session_id))
 							sys.stderr.flush()
 						# consider a reset here - once we handle 0
 					else:
 						sys.stderr.write('\n%s: NEW SESSION ID %d\n' % (now_in_utc(), new_session_id))
 						sys.stderr.flush()
 					# update session_id number
-					session_id = new_session_id
+					self.session_id = new_session_id
 					have_session_id = True
 				except ValueError:
 					# no session_id number known yet - should only happen once
@@ -316,20 +318,20 @@ class RTRClient(object):
 
 				# At every oppertunity, see if we have a new serial number
 				new_serial = self.rtr_session.cache_serial_number()
-				if new_serial != serial:
+				if new_serial != self.serial:
 					try:
 						new_session_id = self.rtr_session.get_session_id()
 					except ValueError:
 						new_session_id = 0
-					sys.stderr.write('\n%s: SESSION %d NEW SERIAL %s->%d\n' % (now_in_utc(), new_session_id, serial, new_serial))
+					sys.stderr.write('\n%s: SESSION %d NEW SERIAL %s->%d\n' % (now_in_utc(), new_session_id, self.serial, new_serial))
 					sys.stderr.flush()
 					# dump present routes into file based on serial number
 					if self.dump:
 						dump_routes(self.rtr_session, new_serial, new_session_id)
 					# update serial number
-					serial = new_serial
+					self.serial = new_serial
 					# update session_id
-					session_id = new_session_id
+					self.session_id = new_session_id
 
 				try:
 					# because random timers are your friend! but keep above one second - just because
