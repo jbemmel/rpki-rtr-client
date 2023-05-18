@@ -60,3 +60,7 @@ clean:
 	$(PYTHON) setup.py -q clean
 	rm -rf ${NAME}.egg-info
 
+.venv:
+	python3 -m venv ./.venv
+	. .venv/bin/activate && ./setup.py -q install
+

@@ -1,5 +1,12 @@
 # Change Log
 
+ - 2023-05-16 21:05:47 +0000 [159f48a](../../commit/159f48a9f054abf50bcbbc12d952739d04eb7d72) Split init and connect
+ - 2023-05-11 15:22:47 -0500 [776031a](../../commit/776031a95cfc7ad752f4838f6b402d30599d6c9d) self.
+ - 2023-05-11 15:20:50 -0500 [5554b5e](../../commit/5554b5e680fc6d4876d602bf08874bb95e757d9c) More spaces crap
+ - 2023-05-11 15:19:43 -0500 [1e1f32b](../../commit/1e1f32bc9b57f37406413c57c1b643a9c9f678e9) Fix indentation
+ - 2023-05-11 14:58:25 -0500 [e316949](../../commit/e31694916e84b39fb6c882b0650889061ee5d601) Define RTR client as class, to access route table state
+ - 2023-05-11 11:40:20 -0500 [1b060a8](../../commit/1b060a8b67efe3b3a5990dcaf5638cb2024b02dc) Add 'lookup' method to check whether a given prefix (or a covering prefix with matching maxlen) is announced in RPKI
+ - 2020-06-06 15:02:22 -0700 [601f68a](../../commit/601f68a593c34f9aed77478f6611ce26f21a0b49) typo on CHANGELOG build
  - 2020-06-06 14:52:54 -0700 [1c065a3](../../commit/1c065a3faa285ada7f33445a7173d9373c46d240) CHANGELOG updated
  - 2020-06-06 14:51:59 -0700 [bb8ad13](../../commit/bb8ad13e51881ad7f81d9f135940e9b781f72446) added CHANGELOG file
  - 2020-06-06 14:50:24 -0700 [de0a49b](../../commit/de0a49bcb8a46a1b9b82dc5580ee54012b41c5c3) 1.2.0 release

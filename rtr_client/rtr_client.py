@@ -9,6 +9,7 @@ import select
 import time
 import json
 import ipaddress
+import netns
 from datetime import datetime
 from random import randrange
 
@@ -38,13 +39,13 @@ class Connect(object):
 	fd = None
 	connect_timeout = 5 # this is about the socket connect timeout and not data timeout
 
-	def __init__(self, host=None, port=None):
+	def __init__(self, host=None, port=None, namespace=None):
 		"""RTR client"""
 		if host:
 			self.rtr_host = host
 		if port:
 			self.rtr_port = port
-		self.fd = self._connect()
+		self.fd = self._connect(namespace)
 
 	def close(self):
 		"""RTR client"""
@@ -84,7 +85,7 @@ class Connect(object):
 		# simple back off for failed connect
 		time.sleep(n)
 
-	def _connect(self):
+	def _connect(self,namespace):
 		"""RTR client"""
 		try:
 			ginfo = socket.getaddrinfo(self.rtr_host, self.rtr_port, 0, 0, socket.SOL_TCP)
@@ -97,7 +98,10 @@ class Connect(object):
 			for gthis in ginfo:
 				try:
 					afamily, socktype, proto, canonname, sockaddr = gthis
-					fd = socket.socket(afamily, socktype, proto)
+					if namespace:
+						fd = netns.socket(netns.get_ns_path(nsname=namespace),afamily, socktype, proto)
+					else:
+						fd = socket.socket(afamily, socktype, proto)
 					fd.settimeout(self.connect_timeout)
 					fd.connect(sockaddr)
 					self._sockaddr = sockaddr
