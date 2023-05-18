@@ -1,5 +1,8 @@
 # Change Log
 
+ - 2023-05-18 21:30:56 +0000 [1fbf8b6](../../commit/1fbf8b6c5eb405e7e8b8f0b99e50453eadaeaabc) Fix local vars
+ - 2023-05-18 19:16:44 +0000 [6041c67](../../commit/6041c6722c6c27cf90c473faeecdc77127e7102b) Add namespace arg
+ - 2023-05-18 19:12:49 +0000 [52605cf](../../commit/52605cf29f18105e68db6ef8af669401b3a7cd7a) Add explicit netns support
  - 2023-05-16 21:05:47 +0000 [159f48a](../../commit/159f48a9f054abf50bcbbc12d952739d04eb7d72) Split init and connect
  - 2023-05-11 15:22:47 -0500 [776031a](../../commit/776031a95cfc7ad752f4838f6b402d30599d6c9d) self.
  - 2023-05-11 15:20:50 -0500 [5554b5e](../../commit/5554b5e680fc6d4876d602bf08874bb95e757d9c) More spaces crap
