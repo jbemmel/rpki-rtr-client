@@ -245,7 +245,7 @@ class RTRClient(object):
 			self.dump_fd = open('data/__________-raw-data.bin', 'w')
 
 
-	def connect(self, host=None, port=None, timeout=None, namespace=None):
+	def connect(self, host=None, port=None, timeout=0, namespace=None):
 		""" Does not return """
 		p = Process()
 
