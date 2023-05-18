@@ -99,7 +99,7 @@ class Connect(object):
 				try:
 					afamily, socktype, proto, canonname, sockaddr = gthis
 					if namespace:
-						fd = netns.socket(netns.get_ns_path(nsname=namespace),afamily, socktype, proto)
+						fd = netns.socket(netns.get_ns_path(nsname=namespace), afamily, socktype, proto)
 					else:
 						fd = socket.socket(afamily, socktype, proto)
 					fd.settimeout(self.connect_timeout)
@@ -243,7 +243,7 @@ class RTRClient(object):
 			self.dump_fd = open('data/__________-raw-data.bin', 'w')
 
 
-	def connect(self, host=None, port=None, timeout=None):
+	def connect(self, host=None, port=None, timeout=None, namespace=None):
 		""" Does not return """
 		p = Process()
 
@@ -253,7 +253,7 @@ class RTRClient(object):
 		while True:
 			if not connection:
 				try:
-					connection = Connect(host, port)
+					connection = Connect(host, port, namespace)
 				except KeyboardInterrupt:
 					# no need to print anything - just exit!
 					sys.exit(1)
