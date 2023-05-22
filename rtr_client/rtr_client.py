@@ -336,7 +336,7 @@ class RTRClient(object):
 				try:
 					# because random timers are your friend! but keep above one second - just because
 					delta = 200 # in ms
-					this_timeout = max(1.0, randrange(timeout * (1000-delta), timeout * (1000+delta), 1000)/1000.0)
+					this_timeout = max(1.0, randrange(timeout * (1000-delta), timeout * (1000+delta), 1000)/1000.0 if timeout>0 else 1.0 )
 					ready = select.select([connection.fd], [], [], this_timeout)
 				except KeyboardInterrupt:
 					sys.stderr.write('\nselect wait: ^C\n')
