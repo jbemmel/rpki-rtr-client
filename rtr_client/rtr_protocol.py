@@ -209,6 +209,7 @@ class rfc8210router(object):
 					self._routes['announce'] += [{'ip': cidr, 'asn': asn}]
 			if self._routingtable:
 				try:
+					self._debug_( f"rfc8210router: announce {cidr} {asn} {maxlen}" )
 					self._routingtable.announce(cidr, asn, maxlen)
 				except:
 					sys.stderr.write("announce(%s, %s, %s) - failed\n" % (cidr, asn, maxlen))
@@ -220,6 +221,7 @@ class rfc8210router(object):
 					self._routes['withdraw'] += [{'ip': cidr, 'asn': asn}]
 			if self._routingtable:
 				try:
+					self._debug_( f"rfc8210router: withdraw {cidr} {asn} {maxlen}" )
 					self._routingtable.withdraw(cidr, asn, maxlen)
 				except:
 					sys.stderr.write("withdraw(%s, %s, %s) - failed\n" % (cidr, asn, maxlen))
