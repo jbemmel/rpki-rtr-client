@@ -68,7 +68,7 @@ class RoutingTable(object):
 
 	def lookup(self, prefix):
 		""" Check if the given prefix is in the table, and return the list of AS
-		    numbers authorized to originate that prefix """
+			numbers authorized to originate that prefix """
 		cidr = ipaddress.ip_network( prefix )
 		version = cidr.version
 		len = cidr.prefixlen
@@ -81,15 +81,15 @@ class RoutingTable(object):
 		if self._ipv[version].has_key(cidr):
 			if len in self._ipv[version][cidr]:
 				# one or more ASN, return first and only entry under maxlen
-				return list(self._ipv[version][cidr][len][0].keys())
+				return (len, list(self._ipv[version][cidr][len][0].keys()))
 			else:
 				# In theory there could be multiple different maxlen values
 				for maxlen in self._ipv[version][cidr]:
 					if maxlen>len:
-						return list( self._ipv[version][cidr][maxlen][0].keys() )
+						return (maxlen, list( self._ipv[version][cidr][maxlen][0].keys() ))
 
 		# Not found
-		return None
+		return (0,[])
 
 	def save_routing_table(self):
 		"""RTR protocol basic Routing Table support"""

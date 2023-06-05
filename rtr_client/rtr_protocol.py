@@ -511,8 +511,9 @@ class rfc8210router(object):
 		#	self._routingtable.clear()
 
 	def lookup_prefix(self,cidr):
-		""" JvB added, checks whether a given prefix is announced in RPKI """
+		""" JvB added, checks whether a given prefix is announced in RPKI
+			returns (maxlen,list of AS numbers) """
 		if self._routingtable:
 			return self._routingtable.lookup(cidr)
 		print( "JvB no routing table yet..." )
-		return None
+		return (0,[])
